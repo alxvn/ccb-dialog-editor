@@ -10,7 +10,7 @@ import {
   removeProject,
   updateDialog,
 } from "./store";
-import type { DialogFile } from "../shared/schemas";
+import type { DialogFile, DialogType } from "../shared/schemas";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -39,7 +39,9 @@ app.whenReady().then(() => {
   ipcMain.handle("projects:open", async (_event, projectId: string) => openProject(projectId));
   ipcMain.handle("projects:remove", async (_event, projectId: string) => removeProject(projectId));
 
-  ipcMain.handle("dialogs:create", async (_event, projectId: string, name: string) => createDialog(projectId, name));
+  ipcMain.handle("dialogs:create", async (_event, projectId: string, name: string, type: DialogType) =>
+    createDialog(projectId, name, type),
+  );
   ipcMain.handle("dialogs:update", async (_event, projectId: string, dialog: DialogFile) => updateDialog(projectId, dialog));
   ipcMain.handle("dialogs:remove", async (_event, projectId: string, dialogId: string) => removeDialog(projectId, dialogId));
   ipcMain.handle("projects:export", async (_event, projectId: string, dialogs: DialogFile[]) =>

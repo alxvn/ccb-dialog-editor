@@ -1,8 +1,10 @@
-import { JSX, useEffect, useMemo, useRef, useState } from "react";
-import type { DialogFile, ProjectFile } from "../../shared/schemas";
+import { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { BranchingDialogFile, DialogFile, DialogType, LinearDialogFile, ProjectFile } from "../../shared/schemas";
+import BranchingDialogEditor from "../components/branching/BranchingDialogEditor";
 import ConfirmModal from "../components/ConfirmModal";
-import DialogEditor from "../components/DialogEditor";
+import CreateDialogModal from "../components/CreateDialogModal";
 import DialogList from "../components/DialogList";
+import LinearDialogEditor from "../components/LinearDialogEditor";
 import NamePromptModal from "../components/NamePromptModal";
 import ProjectPicker from "../components/ProjectPicker";
 
@@ -28,6 +30,7 @@ export default function App(): JSX.Element {
   const [activeDialogId, setActiveDialogId] = useState<string | null>(null);
   const [namePrompt, setNamePrompt] = useState<NamePromptConfig | null>(null);
   const [confirmPrompt, setConfirmPrompt] = useState<ConfirmConfig | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
   const saveTimerRef = useRef<number | undefined>(undefined);
 
@@ -36,6 +39,14 @@ export default function App(): JSX.Element {
   }, []);
 
   const activeDialog = useMemo(() => (activeDialogId ? dialogsMap[activeDialogId] ?? null : null), [activeDialogId, dialogsMap]);
+
+  const dialogTypes = useMemo(() => {
+    const types: Record<string, DialogType> = {};
+    Object.values(dialogsMap).forEach((dialog) => {
+      types[dialog.id] = dialog.type;
+    });
+    return types;
+  }, [dialogsMap]);
 
   const saveDialogDebounced = (nextDialog: DialogFile): void => {
     if (!project) return;
@@ -86,32 +97,43 @@ export default function App(): JSX.Element {
 
   const handleCreateDialog = (): void => {
     if (!project) return;
-    openNamePrompt({
-      title: "Dialog name",
-      onSubmit: async (name) => {
-        closeNamePrompt();
-        const dialog = await window.dialogApi.createDialog(project.id, name);
-        setProject((prev) =>
-          prev ? { ...prev, dialogs: [...prev.dialogs, { id: dialog.id, name: dialog.name, file: `${dialog.id}.json` }] } : prev
-        );
-        setDialogsMap((prev) => ({ ...prev, [dialog.id]: dialog }));
-        setActiveDialogId(dialog.id);
-      },
-    });
+    setShowCreateDialog(true);
   };
 
-  const updateDialogLocal = (nextDialog: DialogFile): void => {
-    setDialogsMap((prev) => ({ ...prev, [nextDialog.id]: nextDialog }));
+  const handleCreateDialogSubmit = async (name: string, type: DialogType): Promise<void> => {
+    if (!project) return;
+    setShowCreateDialog(false);
+    const dialog = await window.dialogApi.createDialog(project.id, name, type);
     setProject((prev) =>
-      prev
-        ? {
-            ...prev,
-            dialogs: prev.dialogs.map((ref) => (ref.id === nextDialog.id ? { ...ref, name: nextDialog.name } : ref)),
-          }
-        : prev
+      prev ? { ...prev, dialogs: [...prev.dialogs, { id: dialog.id, name: dialog.name, file: `${dialog.id}.json` }] } : prev,
     );
-    saveDialogDebounced(nextDialog);
+    setDialogsMap((prev) => ({ ...prev, [dialog.id]: dialog }));
+    setActiveDialogId(dialog.id);
   };
+
+  const updateDialogLocal = useCallback((nextDialog: DialogFile): void => {
+    setDialogsMap((prev) => {
+      const current = prev[nextDialog.id];
+      if (current && JSON.stringify(current) === JSON.stringify(nextDialog)) {
+        return prev;
+      }
+      return { ...prev, [nextDialog.id]: nextDialog };
+    });
+    setProject((prev) => {
+      if (!prev) return prev;
+      const ref = prev.dialogs.find((d) => d.id === nextDialog.id);
+      if (ref?.name === nextDialog.name) {
+        return prev;
+      }
+      return {
+        ...prev,
+        dialogs: prev.dialogs.map((dialogRef) =>
+          dialogRef.id === nextDialog.id ? { ...dialogRef, name: nextDialog.name } : dialogRef,
+        ),
+      };
+    });
+    saveDialogDebounced(nextDialog);
+  }, [project]);
 
   const performRemoveDialog = async (dialogId: string): Promise<void> => {
     if (!project) return;
@@ -190,6 +212,10 @@ export default function App(): JSX.Element {
     />
   ) : null;
 
+  const createDialogModal = showCreateDialog ? (
+    <CreateDialogModal onCancel={() => setShowCreateDialog(false)} onSubmit={(name, type) => void handleCreateDialogSubmit(name, type)} />
+  ) : null;
+
   if (!project) {
     return (
       <>
@@ -210,14 +236,23 @@ export default function App(): JSX.Element {
       <DialogList
         projectName={project.name}
         dialogs={project.dialogs}
+        dialogTypes={dialogTypes}
         activeDialogId={activeDialogId}
         onCreateDialog={handleCreateDialog}
         onSelectDialog={setActiveDialogId}
         onRemoveProject={() => requestRemoveProject(project.id, project.name)}
       />
-      {activeDialog ? (
-        <DialogEditor
-          dialog={activeDialog}
+      {activeDialog?.type === "branching" ? (
+        <BranchingDialogEditor
+          dialog={activeDialog as BranchingDialogFile}
+          onDialogChange={updateDialogLocal}
+          onDialogNameChange={(name) => updateDialogLocal({ ...activeDialog, name })}
+          onRemoveDialog={requestRemoveDialog}
+          onExport={handleExport}
+        />
+      ) : activeDialog?.type === "linear" ? (
+        <LinearDialogEditor
+          dialog={activeDialog as LinearDialogFile}
           onDialogNameChange={(name) => updateDialogLocal({ ...activeDialog, name })}
           onLinesChange={(lines) => updateDialogLocal({ ...activeDialog, lines })}
           onRemoveDialog={requestRemoveDialog}
@@ -232,6 +267,7 @@ export default function App(): JSX.Element {
       {exportMessage ? <div className="toast">{exportMessage}</div> : null}
       {namePromptModal}
       {confirmModal}
+      {createDialogModal}
     </main>
   );
 }

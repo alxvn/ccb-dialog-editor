@@ -11,6 +11,7 @@ import {
   projectFileSchema,
   projectsRegistrySchema,
   type DialogFile,
+  type DialogType,
   type ProjectFile,
   type ProjectsRegistry,
 } from "../shared/schemas";
@@ -139,9 +140,16 @@ export async function openProject(projectId: string): Promise<ProjectLoadResult>
   return { project, dialogs };
 }
 
-export async function createDialog(projectId: string, name: string): Promise<DialogFile> {
+export async function createDialog(
+  projectId: string,
+  name: string,
+  type: DialogType = "linear",
+): Promise<DialogFile> {
   const dialogId = randomUUID();
-  const dialog: DialogFile = { id: dialogId, name, lines: [] };
+  const dialog: DialogFile =
+    type === "branching"
+      ? { type: "branching", id: dialogId, name, nodes: [], edges: [] }
+      : { type: "linear", id: dialogId, name, lines: [] };
   const project = await readProject(projectId);
   const now = new Date().toISOString();
   const nextProject: ProjectFile = {
