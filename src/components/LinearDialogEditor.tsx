@@ -1,7 +1,7 @@
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { DialogFile, DialogLine } from "../../shared/schemas";
+import type { DialogLine, LinearDialogFile } from "../../shared/schemas";
 import { dialogActionIds } from "../../shared/schemas";
 import { JSX } from "react/jsx-runtime";
 
@@ -23,7 +23,7 @@ function parseDelayInput(value: string): number | null {
 }
 
 type Props = {
-  dialog: DialogFile;
+  dialog: LinearDialogFile;
   onDialogNameChange: (name: string) => void;
   onLinesChange: (lines: DialogLine[]) => void;
   onRemoveDialog: () => void;
@@ -102,7 +102,7 @@ function SortableLineItem({ line, onChange, onRemove }: LineItemProps): JSX.Elem
   );
 }
 
-export default function DialogEditor({
+export default function LinearDialogEditor({
   dialog,
   onDialogNameChange,
   onLinesChange,

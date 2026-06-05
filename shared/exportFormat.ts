@@ -1,4 +1,12 @@
-import type { DialogFile, DialogLine } from "./schemas";
+import type {
+  BranchingDialogFile,
+  BranchingEdge,
+  BranchingNode,
+  DialogFile,
+  DialogLine,
+  LinearDialogFile,
+} from "./schemas";
+import { findBranchingEntryNodeId } from "./branchingFlow";
 
 function escapeJsSingleQuoted(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\r?\n/g, " ");
@@ -48,9 +56,67 @@ ${entries.join(",\n")}
     ]`;
 }
 
-function formatDialogAssignment(dialog: DialogFile): string {
+function formatLinearDialogAssignment(dialog: LinearDialogFile): string {
   const key = escapeJsSingleQuoted(dialog.name);
   return `    okeDialogs["${key}"] = ${formatDialogLines(dialog.lines)};`;
+}
+
+function formatBranchingNode(node: BranchingNode): string {
+  if (node.type === "response") {
+    return `        "${escapeJsSingleQuoted(node.id)}": {
+            kind: "response",
+            text: ${formatJsNullableString(node.text)}
+        }`;
+  }
+  const speaker = escapeJsSingleQuoted(node.speaker);
+  const text = escapeJsSingleQuoted(node.text);
+  return `        "${escapeJsSingleQuoted(node.id)}": {
+            kind: "line",
+            speaker: '${speaker}',
+            line: '${text}',
+            preAction: ${formatJsNullableString(node.preAction)},
+            postAction: ${formatJsNullableString(node.postAction)},
+            delay: ${formatJsNullableNumber(node.delay)}
+        }`;
+}
+
+function formatBranchingEdge(edge: BranchingEdge): string {
+  return `        { from: "${escapeJsSingleQuoted(edge.source)}", fromHandle: "${escapeJsSingleQuoted(edge.sourceHandle)}", to: "${escapeJsSingleQuoted(edge.target)}" }`;
+}
+
+function formatBranchingDialogAssignment(dialog: BranchingDialogFile): string {
+  const key = escapeJsSingleQuoted(dialog.name);
+  if (dialog.nodes.length === 0) {
+    return `    okeDialogs["${key}"] = {
+        kind: "branching",
+        nodes: {},
+        edges: [],
+        entry: null
+    };`;
+  }
+
+  const nodeEntries = dialog.nodes.map(formatBranchingNode).join(",\n");
+  const edgeEntries = dialog.edges.map(formatBranchingEdge).join(",\n");
+  const entry = findBranchingEntryNodeId(dialog.nodes, dialog.edges);
+  const entryValue = entry === null ? "null" : `"${escapeJsSingleQuoted(entry)}"`;
+
+  return `    okeDialogs["${key}"] = {
+        kind: "branching",
+        nodes: {
+${nodeEntries}
+        },
+        edges: [
+${edgeEntries}
+        ],
+        entry: ${entryValue}
+    };`;
+}
+
+function formatDialogAssignment(dialog: DialogFile): string {
+  if (dialog.type === "branching") {
+    return formatBranchingDialogAssignment(dialog);
+  }
+  return formatLinearDialogAssignment(dialog);
 }
 
 export function buildCopperCubeDialogExtension(

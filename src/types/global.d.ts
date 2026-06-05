@@ -1,4 +1,4 @@
-import type { DialogFile, ProjectFile } from "../../shared/schemas";
+import type { DialogFile, DialogType, ProjectFile } from "../../shared/schemas";
 
 type ProjectSummary = { id: string; name: string; projectDir: string };
 type OpenProjectResult = { project: ProjectFile; dialogs: DialogFile[] };
@@ -10,7 +10,7 @@ declare global {
       createProject: (name: string) => Promise<ProjectSummary>;
       openProject: (projectId: string) => Promise<OpenProjectResult>;
       removeProject: (projectId: string) => Promise<void>;
-      createDialog: (projectId: string, name: string) => Promise<DialogFile>;
+      createDialog: (projectId: string, name: string, type: DialogType) => Promise<DialogFile>;
       updateDialog: (projectId: string, dialog: DialogFile) => Promise<DialogFile>;
       removeDialog: (projectId: string, dialogId: string) => Promise<void>;
       exportProject: (projectId: string, dialogs: DialogFile[]) => Promise<string>;

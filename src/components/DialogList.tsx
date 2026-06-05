@@ -1,9 +1,10 @@
 import { JSX } from "react/jsx-runtime";
-import type { ProjectDialogRef } from "../../shared/schemas";
+import type { DialogType, ProjectDialogRef } from "../../shared/schemas";
 
 type Props = {
   projectName: string;
   dialogs: ProjectDialogRef[];
+  dialogTypes: Record<string, DialogType>;
   activeDialogId: string | null;
   onCreateDialog: () => void;
   onSelectDialog: (dialogId: string) => void;
@@ -13,6 +14,7 @@ type Props = {
 export default function DialogList({
   projectName,
   dialogs,
+  dialogTypes,
   activeDialogId,
   onCreateDialog,
   onSelectDialog,
@@ -41,7 +43,8 @@ export default function DialogList({
                 className={dialog.id === activeDialogId ? "list-button active" : "list-button"}
                 onClick={() => onSelectDialog(dialog.id)}
               >
-                {dialog.name}
+                <span className="dialog-list-name">{dialog.name}</span>
+                <span className="dialog-type-badge">{dialogTypes[dialog.id] ?? "linear"}</span>
               </button>
               <button
                 type="button"
