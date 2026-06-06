@@ -5,7 +5,7 @@
   "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev:renderer": "vite",
-    "dev:electron": "wait-on tcp:5173 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "dev:electron": "wait-on tcp:5173 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron --inspect=9229 .",
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "build:renderer": "vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
@@ -21,6 +21,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@xyflow/react": "^12.11.0",
+    "node-llama-cpp": "^3.18.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zod": "^4.4.3"
@@ -52,7 +53,16 @@
     "files": [
       "dist/**",
       "dist-electron/**",
-      "package.json"
+      "package.json",
+      "!node_modules/node-llama-cpp/bins/**/*",
+      "node_modules/node-llama-cpp/bins/${os}-${arch}*/**/*",
+      "!node_modules/node-llama-cpp/llama/localBuilds/**/*",
+      "node_modules/node-llama-cpp/llama/localBuilds/${os}-${arch}*/**/*",
+      "!node_modules/@node-llama-cpp/*/bins/**/*",
+      "node_modules/@node-llama-cpp/${os}-${arch}*/bins/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/node-llama-cpp/**/*"
     ],
     "nsis": {
       "oneClick": false,

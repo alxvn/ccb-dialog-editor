@@ -9,8 +9,10 @@ import {
   removeDialog,
   removeProject,
   updateDialog,
+  updateProject,
 } from "./store";
-import type { DialogFile, DialogType } from "../shared/schemas";
+import type { DialogFile, DialogType, ProjectFile } from "../shared/schemas";
+import { downloadModel, generateLine, getModelStatus, disposeWorker } from "./llm/llmBridge";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -44,9 +46,23 @@ app.whenReady().then(() => {
   );
   ipcMain.handle("dialogs:update", async (_event, projectId: string, dialog: DialogFile) => updateDialog(projectId, dialog));
   ipcMain.handle("dialogs:remove", async (_event, projectId: string, dialogId: string) => removeDialog(projectId, dialogId));
+  ipcMain.handle("projects:update", async (_event, projectId: string, project: ProjectFile) =>
+    updateProject(projectId, project),
+  );
   ipcMain.handle("projects:export", async (_event, projectId: string, dialogs: DialogFile[]) =>
     exportProjectToExtension(projectId, dialogs),
   );
+
+  ipcMain.handle("llm:status", async () => getModelStatus());
+  ipcMain.handle("llm:download", async (event) => {
+    await downloadModel((percent) => {
+      event.sender.send("llm:download-progress", { percent });
+    });
+  });
+  ipcMain.handle("llm:generate", async (_event, prompt: string, speakerName: string) => {
+    const text = await generateLine(prompt, speakerName);
+    return { text };
+  });
 
   createWindow();
   app.on("activate", () => {
@@ -56,4 +72,9 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+
+app.on('before-quit', () => {
+  disposeWorker();
+  console.log('worker disposed');
 });

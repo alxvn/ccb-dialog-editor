@@ -90,6 +90,7 @@ export async function createProject(name: string): Promise<ProjectSummary> {
     createdAt: now,
     updatedAt: now,
     extensionPostfix: generateExtensionPostfix(),
+    speakers: [],
     dialogs: [],
   };
 
@@ -149,7 +150,7 @@ export async function createDialog(
   const dialog: DialogFile =
     type === "branching"
       ? { type: "branching", id: dialogId, name, nodes: [], edges: [] }
-      : { type: "linear", id: dialogId, name, lines: [] };
+      : { type: "linear", id: dialogId, name, location: "", lines: [] };
   const project = await readProject(projectId);
   const now = new Date().toISOString();
   const nextProject: ProjectFile = {
@@ -180,6 +181,20 @@ export async function updateDialog(projectId: string, dialog: DialogFile): Promi
   };
   await writeProject(nextProject);
   return parsedDialog;
+}
+
+export async function updateProject(projectId: string, project: ProjectFile): Promise<ProjectFile> {
+  const existing = await readProject(projectId);
+  if (existing.id !== projectId) {
+    throw new Error("Project ID mismatch");
+  }
+  const parsedProject = projectFileSchema.parse({ ...project, id: projectId });
+  const nextProject: ProjectFile = {
+    ...parsedProject,
+    updatedAt: new Date().toISOString(),
+  };
+  await writeProject(nextProject);
+  return nextProject;
 }
 
 export async function removeDialog(projectId: string, dialogId: string): Promise<void> {

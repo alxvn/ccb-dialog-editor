@@ -72,10 +72,17 @@ export const branchingViewportSchema = z.object({
   zoom: z.number(),
 });
 
+export const speakerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+});
+
 export const linearDialogFileSchema = z.object({
   type: z.literal("linear"),
   id: z.string(),
   name: z.string(),
+  location: z.string().default(""),
   lines: z.array(dialogLineSchema),
 });
 
@@ -99,8 +106,23 @@ function preprocessDialogFile(value: unknown): unknown {
     return value;
   }
   const record = value as Record<string, unknown>;
+  let next = record;
   if (!("type" in record) && "lines" in record) {
-    return { ...record, type: "linear" };
+    next = { ...record, type: "linear" };
+  }
+  if (next.type === "linear" && !("location" in next)) {
+    next = { ...next, location: "" };
+  }
+  return next;
+}
+
+function preprocessProjectFile(value: unknown): unknown {
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+  const record = value as Record<string, unknown>;
+  if (!("speakers" in record)) {
+    return { ...record, speakers: [] };
   }
   return value;
 }
@@ -116,14 +138,18 @@ export const dialogRefSchema = z.object({
   file: z.string(),
 });
 
-export const projectFileSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  extensionPostfix: z.string().length(6).optional(),
-  dialogs: z.array(dialogRefSchema),
-});
+export const projectFileSchema = z.preprocess(
+  preprocessProjectFile,
+  z.object({
+    id: z.string(),
+    name: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    extensionPostfix: z.string().length(6).optional(),
+    speakers: z.array(speakerSchema).default([]),
+    dialogs: z.array(dialogRefSchema),
+  }),
+);
 
 export const registryProjectSchema = z.object({
   id: z.string(),
@@ -138,6 +164,7 @@ export const projectsRegistrySchema = z.object({
   lastOpenedDialogId: z.string().nullable(),
 });
 
+export type Speaker = z.infer<typeof speakerSchema>;
 export type DialogLine = z.infer<typeof dialogLineSchema>;
 export type LineBranchingNode = z.infer<typeof lineBranchingNodeSchema>;
 export type ResponseBranchingNode = z.infer<typeof responseBranchingNodeSchema>;

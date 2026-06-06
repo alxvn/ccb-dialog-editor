@@ -29,7 +29,207 @@ button {
 
 .start-panel {
   max-width: 700px;
+  margin: 0;
+}
+
+.start-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 16px;
+  max-width: 1100px;
   margin: 30px auto;
+  padding: 0 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .start-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.model-download-panel h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.model-download-description {
+  margin: 0 0 8px;
+  color: #c8c8c8;
+  line-height: 1.4;
+}
+
+.model-download-name {
+  margin: 0 0 12px;
+  font-family: Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+.model-download-ready {
+  margin: 0 0 8px;
+  color: #8fd48f;
+}
+
+.model-download-error {
+  margin: 8px 0 0;
+  color: #f0a0a0;
+}
+
+.model-download-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.model-download-progress-bar {
+  flex: 1;
+  height: 10px;
+  background: #202229;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.model-download-progress-fill {
+  height: 100%;
+  background: #84a9ff;
+  transition: width 0.2s ease;
+}
+
+.model-download-progress-label {
+  min-width: 3ch;
+  font-size: 0.9rem;
+  color: #c8c8c8;
+}
+
+.dialog-location-input {
+  width: 100%;
+  min-height: 56px;
+  padding: 8px;
+  border: 1px solid #3f424d;
+  border-radius: 6px;
+  background: #202229;
+  color: #fff;
+  resize: vertical;
+}
+
+.speaker-dropdown {
+  position: relative;
+}
+
+.speaker-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  width: min(420px, 80vw);
+  max-height: 420px;
+  overflow: auto;
+}
+
+.speaker-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.speaker-dropdown-empty {
+  margin: 0;
+  color: #c8c8c8;
+}
+
+.speaker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.speaker-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: #202229;
+  border-radius: 6px;
+}
+
+.speaker-row input,
+.speaker-row textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #3f424d;
+  border-radius: 6px;
+  background: #2a2c33;
+  color: #fff;
+}
+
+.speaker-row textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.line-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(100px, 160px) minmax(100px, 130px) minmax(100px, 130px) 100px auto auto;
+  gap: 8px;
+  align-items: start;
+  padding: 8px;
+  background: #202229;
+  border-radius: 6px;
+}
+
+.line-item.line-generating {
+  opacity: 0.85;
+}
+
+.line-generating-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.generate-line-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-wide {
+  width: min(520px, 90vw);
+}
+
+.modal select,
+.modal textarea {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #3f424d;
+  border-radius: 6px;
+  background: #202229;
+  color: #fff;
+}
+
+.generate-detailed-option {
+  margin-bottom: 12px;
+}
+
+.generate-prompt-input {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.generate-loading {
+  margin: 0 0 12px;
+  color: #84a9ff;
 }
 
 .app-layout {
@@ -132,16 +332,6 @@ button {
   gap: 8px;
 }
 
-.line-item {
-  display: grid;
-  grid-template-columns: auto minmax(100px, 160px) minmax(100px, 130px) minmax(100px, 130px) 100px auto;
-  gap: 8px;
-  align-items: start;
-  padding: 8px;
-  background: #202229;
-  border-radius: 6px;
-}
-
 .line-item select,
 .line-item input[type="number"] {
   width: 100%;
@@ -153,7 +343,7 @@ button {
 }
 
 .line-item textarea {
-  grid-column: 2 / -2;
+  grid-column: 2 / -1;
   min-height: 80px;
   resize: vertical;
 }

@@ -10,10 +10,16 @@ declare global {
       createProject: (name: string) => Promise<ProjectSummary>;
       openProject: (projectId: string) => Promise<OpenProjectResult>;
       removeProject: (projectId: string) => Promise<void>;
+      updateProject: (projectId: string, project: ProjectFile) => Promise<ProjectFile>;
       createDialog: (projectId: string, name: string, type: DialogType) => Promise<DialogFile>;
       updateDialog: (projectId: string, dialog: DialogFile) => Promise<DialogFile>;
       removeDialog: (projectId: string, dialogId: string) => Promise<void>;
       exportProject: (projectId: string, dialogs: DialogFile[]) => Promise<string>;
+    };
+    llmApi: {
+      getStatus: () => Promise<{ downloaded: boolean }>;
+      downloadModel: (onProgress: (percent: number) => void) => Promise<void>;
+      generateLine: (prompt: string, speakerName: string) => Promise<{ text: string }>;
     };
   }
 }

@@ -1,10 +1,11 @@
 import { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { BranchingDialogFile, DialogFile, DialogType, LinearDialogFile, ProjectFile } from "../../shared/schemas";
+import type { BranchingDialogFile, DialogFile, DialogType, LinearDialogFile, ProjectFile, Speaker } from "../../shared/schemas";
 import BranchingDialogEditor from "../components/branching/BranchingDialogEditor";
 import ConfirmModal from "../components/ConfirmModal";
 import CreateDialogModal from "../components/CreateDialogModal";
 import DialogList from "../components/DialogList";
 import LinearDialogEditor from "../components/LinearDialogEditor";
+import ModelDownloadPanel from "../components/ModelDownloadPanel";
 import NamePromptModal from "../components/NamePromptModal";
 import ProjectPicker from "../components/ProjectPicker";
 
@@ -33,6 +34,7 @@ export default function App(): JSX.Element {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
   const saveTimerRef = useRef<number | undefined>(undefined);
+  const projectSaveTimerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     void window.dialogApi.listProjects().then(setProjects);
@@ -53,6 +55,13 @@ export default function App(): JSX.Element {
     window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(() => {
       void window.dialogApi.updateDialog(project.id, nextDialog);
+    }, 400);
+  };
+
+  const saveProjectDebounced = (nextProject: ProjectFile): void => {
+    window.clearTimeout(projectSaveTimerRef.current);
+    projectSaveTimerRef.current = window.setTimeout(() => {
+      void window.dialogApi.updateProject(nextProject.id, nextProject);
     }, 400);
   };
 
@@ -134,6 +143,20 @@ export default function App(): JSX.Element {
     });
     saveDialogDebounced(nextDialog);
   }, [project]);
+
+  const updateProjectLocal = useCallback(
+    (nextProject: ProjectFile): void => {
+      setProject((prev) => {
+        if (!prev) return prev;
+        if (JSON.stringify(prev) === JSON.stringify(nextProject)) {
+          return prev;
+        }
+        return nextProject;
+      });
+      saveProjectDebounced(nextProject);
+    },
+    [],
+  );
 
   const performRemoveDialog = async (dialogId: string): Promise<void> => {
     if (!project) return;
@@ -219,12 +242,15 @@ export default function App(): JSX.Element {
   if (!project) {
     return (
       <>
-        <ProjectPicker
-          projects={projects}
-          onCreateProject={handleCreateProject}
-          onOpenProject={handleOpenProject}
-          onRemoveProject={requestRemoveProject}
-        />
+        <div className="start-layout">
+          <ProjectPicker
+            projects={projects}
+            onCreateProject={handleCreateProject}
+            onOpenProject={handleOpenProject}
+            onRemoveProject={requestRemoveProject}
+          />
+          <ModelDownloadPanel />
+        </div>
         {namePromptModal}
         {confirmModal}
       </>
@@ -253,7 +279,10 @@ export default function App(): JSX.Element {
       ) : activeDialog?.type === "linear" ? (
         <LinearDialogEditor
           dialog={activeDialog as LinearDialogFile}
+          speakers={project.speakers ?? []}
           onDialogNameChange={(name) => updateDialogLocal({ ...activeDialog, name })}
+          onLocationChange={(location) => updateDialogLocal({ ...activeDialog, location })}
+          onSpeakersChange={(speakers: Speaker[]) => updateProjectLocal({ ...project, speakers })}
           onLinesChange={(lines) => updateDialogLocal({ ...activeDialog, lines })}
           onRemoveDialog={requestRemoveDialog}
           onExport={handleExport}
