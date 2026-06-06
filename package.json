@@ -2,14 +2,11 @@
   "name": "dialog-app",
   "version": "1.0.0",
   "description": "Electron React dialog authoring tool",
-  "main": "dist-electron/electron/main.js",
+  "main": "./out/main/index.js",
   "scripts": {
-    "dev:renderer": "vite",
-    "dev:electron": "wait-on tcp:5173 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron --inspect=9229 .",
-    "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
-    "build:renderer": "vite build",
-    "build:electron": "tsc -p tsconfig.electron.json",
-    "build": "npm run build:renderer && npm run build:electron",
+    "dev": "electron-vite dev --inspect=9229",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
     "dist:win": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win nsis",
     "lint": "eslint . --ext .ts,.tsx"
   },
@@ -21,6 +18,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@xyflow/react": "^12.11.0",
+    "electron-log": "^5.4.4",
     "node-llama-cpp": "^3.18.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -32,17 +30,15 @@
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.60.1",
     "@typescript-eslint/parser": "^8.60.1",
-    "@vitejs/plugin-react": "^6.0.2",
-    "concurrently": "^10.0.1",
+    "@vitejs/plugin-react": "^5.2.0",
     "cross-env": "^10.1.0",
     "electron": "^42.3.0",
     "electron-builder": "^26.8.1",
-    "electronmon": "^2.0.4",
+    "electron-vite": "^5.0.0",
     "eslint": "^10.4.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.60.1",
-    "vite": "^8.0.16",
-    "wait-on": "^9.0.10"
+    "vite": "^7.3.5"
   },
   "build": {
     "appId": "com.dialogtool.app",
@@ -51,8 +47,7 @@
       "output": "release"
     },
     "files": [
-      "dist/**",
-      "dist-electron/**",
+      "out/**",
       "package.json",
       "!node_modules/node-llama-cpp/bins/**/*",
       "node_modules/node-llama-cpp/bins/${os}-${arch}*/**/*",
@@ -62,7 +57,10 @@
       "node_modules/@node-llama-cpp/${os}-${arch}*/bins/**/*"
     ],
     "asarUnpack": [
-      "node_modules/node-llama-cpp/**/*"
+      "out/main/llmworker*.js",
+      "node_modules/node-llama-cpp/bins",
+      "node_modules/node-llama-cpp/llama/localBuilds",
+      "node_modules/@node-llama-cpp/*"
     ],
     "nsis": {
       "oneClick": false,

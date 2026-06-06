@@ -1,7 +1,11 @@
 import { generateLine, getModelStatus, downloadModel, disposeModel } from "./llmService";
 
-process.parentPort.on("message", async (e) => {
+process.stderr.write("[llm-worker] script started\n");
+
+async function handleMessage(e: Electron.MessageEvent): Promise<void> {
   const { id, type, payload } = e.data as { id: string; type: string; payload: any };
+  process.stderr.write(`[llm-worker] received: ${type}\n`);
+
   try {
     let result: any;
 
@@ -18,13 +22,15 @@ process.parentPort.on("message", async (e) => {
       throw new Error(`Unknown message type: ${type}`);
     }
 
-    console.log(result);
-
+    process.stderr.write(`[llm-worker] sending result: ${JSON.stringify(result)}\n`);
     process.parentPort.postMessage({ id, type: "result", payload: result });
   } catch (err: any) {
+    process.stderr.write(`[llm-worker] error: ${err.stack}\n`);
     process.parentPort.postMessage({ id, type: "error", payload: err.message });
   }
-});
+}
+
+process.parentPort.on("message", handleMessage);
 
 process.on("SIGTERM", () => {
   disposeModel();

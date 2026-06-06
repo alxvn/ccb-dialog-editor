@@ -21,17 +21,16 @@ function createWindow(): void {
     width: 1280,
     height: 820,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "../preload/index.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
 
-  const devUrl = process.env.VITE_DEV_SERVER_URL;
-  if (devUrl) {
-    void mainWindow.loadURL(devUrl);
+  if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
+    void mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
-    void mainWindow.loadFile(path.join(__dirname, "../../dist/index.html"));
+    void mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
 }
 
