@@ -54,15 +54,33 @@ export default function GenerateLineModal({ onSubmit, onCancel, generating }: Pr
             ))}
           </select>
 
-          <label className="dialog-type-option generate-detailed-option">
+          <label
+            className="dialog-type-option generate-detailed-option"
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              gap: 8,
+              lineHeight: 1.25,
+            }}
+          >
             <input
               type="checkbox"
               checked={detailed}
               disabled={generating}
               onChange={(event) => setDetailed(event.target.checked)}
+              style={{
+                marginRight: 8,
+                width: "auto",
+                flex: "none",
+                alignSelf: "baseline",
+                marginTop: 2,
+              }}
             />
-            Make detailed response
+            <span style={{ alignSelf: "baseline" }}>Make detailed response</span>
           </label>
+    
+    
+
 
           <label className="field-label" htmlFor="generate-prompt">
             Prompt

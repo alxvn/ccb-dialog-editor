@@ -222,6 +222,14 @@ button {
   margin-bottom: 12px;
 }
 
+.generate-detailed-option span {
+  width: 80%;
+}
+
+.generate-detailed-option input {
+  right: 20px;
+}
+
 .generate-prompt-input {
   min-height: 96px;
   resize: vertical;
@@ -348,8 +356,20 @@ button {
   resize: vertical;
 }
 
+.line-item-actions {
+  grid-column: 6 / -1;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .drag-handle {
   width: 34px;
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .danger {

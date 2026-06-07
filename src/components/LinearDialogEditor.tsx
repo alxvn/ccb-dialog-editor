@@ -155,17 +155,19 @@ function SortableLineItem({
           placeholder="Line"
           onChange={(event) => onChange({ ...line, text: event.target.value })}
         />
-        <button
-          type="button"
-          className="generate-line-btn"
-          disabled={!canGenerate || generating}
-          onClick={() => setShowGenerateModal(true)}
-        >
-          Generate
-        </button>
-        <button type="button" className="danger" onClick={onRemove}>
-          Remove
-        </button>
+        <div className="line-item-actions">
+          <button
+            type="button"
+            className="generate-line-btn"
+            disabled={!canGenerate || generating}
+            onClick={() => setShowGenerateModal(true)}
+          >
+            Generate
+          </button>
+          <button type="button" className="danger" onClick={onRemove}>
+            Remove
+          </button>
+        </div>
         {generating ? <div className="line-generating-overlay">Generating...</div> : null}
       </div>
       {showGenerateModal ? (
