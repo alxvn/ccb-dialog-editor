@@ -12,8 +12,10 @@ const api = {
     ipcRenderer.invoke("dialogs:create", projectId, name, type),
   updateDialog: async (projectId: string, dialog: DialogFile) => ipcRenderer.invoke("dialogs:update", projectId, dialog),
   removeDialog: async (projectId: string, dialogId: string) => ipcRenderer.invoke("dialogs:remove", projectId, dialogId),
-  exportProject: async (projectId: string, dialogs: DialogFile[]) =>
-    ipcRenderer.invoke("projects:export", projectId, dialogs),
+  ensureExtensionPostfix: async (projectId: string) =>
+    ipcRenderer.invoke("projects:ensure-extension-postfix", projectId),
+  writeExtension: async (projectId: string, extensionText: string) =>
+    ipcRenderer.invoke("projects:write-extension", projectId, extensionText),
 };
 
 const llmApi = {

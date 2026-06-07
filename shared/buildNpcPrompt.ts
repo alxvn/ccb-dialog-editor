@@ -1,6 +1,8 @@
 import { getMoodInstruction } from "./llmMoods";
 import type { DialogLine, Speaker } from "./schemas";
 
+export type PromptRole = "npc" | "player";
+
 export type BuildNpcPromptParams = {
   speakerName: string;
   speakerDescription: string;
@@ -9,6 +11,7 @@ export type BuildNpcPromptParams = {
   moodId: string;
   userPrompt: string;
   detailed: boolean;
+  role?: PromptRole;
 };
 
 function formatDialogueHistory(lines: DialogLine[]): string {
@@ -33,11 +36,16 @@ export function buildNpcPrompt(params: BuildNpcPromptParams): string {
     moodId,
     userPrompt,
     detailed,
+    role = "npc",
   } = params;
 
   const sections: string[] = [];
 
-  sections.push("You are a game character, responding to the game dialogue.");
+  sections.push(
+    role === "player"
+      ? "You are the player character, choosing what to say next in the game dialogue."
+      : "You are a game character, responding to the game dialogue.",
+  );
   sections.push("");
   sections.push("#Character:");
   sections.push(`##Name: ${speakerName}`);
@@ -66,7 +74,11 @@ export function buildNpcPrompt(params: BuildNpcPromptParams): string {
   }
   sections.push(detailed ? "Answer in detail." : "Keep the response concise.");
   sections.push("");
-  sections.push("Generate only the next dialogue line.");
+  sections.push(
+    role === "player"
+      ? "Generate only the next player dialogue choice."
+      : "Generate only the next dialogue line.",
+  );
 
   const prompt = sections.join("\n");
   console.log(`buildNpcPrompt: ${prompt}`);

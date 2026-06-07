@@ -1,4 +1,5 @@
 import { JSX, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { buildCopperCubeDialogExtension } from "../../shared/exportFormat";
 import type { BranchingDialogFile, DialogFile, DialogType, LinearDialogFile, ProjectFile, Speaker } from "../../shared/schemas";
 import BranchingDialogEditor from "../components/branching/BranchingDialogEditor";
 import ConfirmModal from "../components/ConfirmModal";
@@ -208,10 +209,21 @@ export default function App(): JSX.Element {
     });
   };
 
-  const handleExport = async (): Promise<void> => {
+  const handleExport = async (dialogOverride?: DialogFile): Promise<void> => {
     if (!project) return;
-    const dialogs = Object.values(dialogsMap);
-    const outputPath = await window.dialogApi.exportProject(project.id, dialogs);
+    const extensionPostfix = await window.dialogApi.ensureExtensionPostfix(project.id);
+    if (project.extensionPostfix !== extensionPostfix) {
+      updateProjectLocal({ ...project, extensionPostfix });
+    }
+    const dialogs = Object.values(dialogsMap).map((dialog) =>
+      dialogOverride && dialog.id === dialogOverride.id ? dialogOverride : dialog,
+    );
+    const extensionText = buildCopperCubeDialogExtension(
+      project.name,
+      extensionPostfix,
+      dialogs,
+    );
+    const outputPath = await window.dialogApi.writeExtension(project.id, extensionText);
     setExportMessage(`Exported to ${outputPath}`);
     window.setTimeout(() => setExportMessage(null), 4000);
   };
@@ -271,8 +283,12 @@ export default function App(): JSX.Element {
       {activeDialog?.type === "branching" ? (
         <BranchingDialogEditor
           dialog={activeDialog as BranchingDialogFile}
+          speakers={project.speakers ?? []}
           onDialogChange={updateDialogLocal}
           onDialogNameChange={(name) => updateDialogLocal({ ...activeDialog, name })}
+          onLocationChange={(location) => updateDialogLocal({ ...activeDialog, location })}
+          onPlayerSpeakerChange={(playerSpeaker) => updateDialogLocal({ ...activeDialog, playerSpeaker })}
+          onSpeakersChange={(speakers: Speaker[]) => updateProjectLocal({ ...project, speakers })}
           onRemoveDialog={requestRemoveDialog}
           onExport={handleExport}
         />

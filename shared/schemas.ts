@@ -51,6 +51,8 @@ export const responseBranchingNodeSchema = z.object({
   type: z.literal("response"),
   position: positionSchema,
   text: z.string(),
+  preAction: z.string().nullable().default(null),
+  postAction: z.string().nullable().default(null),
 });
 
 export const branchingNodeSchema = z.discriminatedUnion("type", [
@@ -90,6 +92,8 @@ export const branchingDialogFileSchema = z.object({
   type: z.literal("branching"),
   id: z.string(),
   name: z.string(),
+  location: z.string().default(""),
+  playerSpeaker: z.string().default(""),
   nodes: z.array(branchingNodeSchema),
   edges: z.array(branchingEdgeSchema),
   viewport: branchingViewportSchema.optional(),
@@ -112,6 +116,14 @@ function preprocessDialogFile(value: unknown): unknown {
   }
   if (next.type === "linear" && !("location" in next)) {
     next = { ...next, location: "" };
+  }
+  if (next.type === "branching") {
+    if (!("location" in next)) {
+      next = { ...next, location: "" };
+    }
+    if (!("playerSpeaker" in next)) {
+      next = { ...next, playerSpeaker: "" };
+    }
   }
   return next;
 }

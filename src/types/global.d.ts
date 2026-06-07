@@ -14,7 +14,8 @@ declare global {
       createDialog: (projectId: string, name: string, type: DialogType) => Promise<DialogFile>;
       updateDialog: (projectId: string, dialog: DialogFile) => Promise<DialogFile>;
       removeDialog: (projectId: string, dialogId: string) => Promise<void>;
-      exportProject: (projectId: string, dialogs: DialogFile[]) => Promise<string>;
+      ensureExtensionPostfix: (projectId: string) => Promise<string>;
+      writeExtension: (projectId: string, extensionText: string) => Promise<string>;
     };
     llmApi: {
       getStatus: () => Promise<{ downloaded: boolean }>;

@@ -20,15 +20,15 @@ function escapeXmlAttribute(value: string): string {
     .replace(/>/g, "&gt;");
 }
 
-function formatJsNullableString(value: string | null): string {
-  if (value === null) {
+function formatJsNullableString(value: string | null | undefined): string {
+  if (value === null || value === undefined) {
     return "null";
   }
   return `'${escapeJsSingleQuoted(value)}'`;
 }
 
-function formatJsNullableNumber(value: number | null): string {
-  if (value === null) {
+function formatJsNullableNumber(value: number | null | undefined): string {
+  if (value === null || value === undefined) {
     return "null";
   }
   return String(value);
@@ -61,22 +61,52 @@ function formatLinearDialogAssignment(dialog: LinearDialogFile): string {
   return `    okeDialogs["${key}"] = ${formatDialogLines(dialog.lines)};`;
 }
 
-function formatBranchingNode(node: BranchingNode): string {
+function normalizeBranchingNode(node: BranchingNode): BranchingNode {
+  const record = node as BranchingNode & { data?: Record<string, unknown> };
+  const nested = record.data ?? {};
+
   if (node.type === "response") {
-    return `        "${escapeJsSingleQuoted(node.id)}": {
+    return {
+      id: node.id,
+      type: "response",
+      position: node.position,
+      text: node.text ?? (nested.text as string | undefined) ?? "",
+      preAction: node.preAction ?? (nested.preAction as string | null | undefined) ?? null,
+      postAction: node.postAction ?? (nested.postAction as string | null | undefined) ?? null,
+    };
+  }
+
+  return {
+    id: node.id,
+    type: "line",
+    position: node.position,
+    speaker: node.speaker ?? (nested.speaker as string | undefined) ?? "",
+    text: node.text ?? (nested.text as string | undefined) ?? "",
+    preAction: node.preAction ?? (nested.preAction as string | null | undefined) ?? null,
+    postAction: node.postAction ?? (nested.postAction as string | null | undefined) ?? null,
+    delay: node.delay ?? (nested.delay as number | null | undefined) ?? null,
+  };
+}
+
+function formatBranchingNode(node: BranchingNode): string {
+  const normalized = normalizeBranchingNode(node);
+  if (normalized.type === "response") {
+    return `        "${escapeJsSingleQuoted(normalized.id)}": {
             kind: "response",
-            text: ${formatJsNullableString(node.text)}
+            text: ${formatJsNullableString(normalized.text)},
+            preAction: ${formatJsNullableString(normalized.preAction)},
+            postAction: ${formatJsNullableString(normalized.postAction)}
         }`;
   }
-  const speaker = escapeJsSingleQuoted(node.speaker);
-  const text = escapeJsSingleQuoted(node.text);
-  return `        "${escapeJsSingleQuoted(node.id)}": {
+  const speaker = escapeJsSingleQuoted(normalized.speaker);
+  const text = escapeJsSingleQuoted(normalized.text);
+  return `        "${escapeJsSingleQuoted(normalized.id)}": {
             kind: "line",
             speaker: '${speaker}',
             line: '${text}',
-            preAction: ${formatJsNullableString(node.preAction)},
-            postAction: ${formatJsNullableString(node.postAction)},
-            delay: ${formatJsNullableNumber(node.delay)}
+            preAction: ${formatJsNullableString(normalized.preAction)},
+            postAction: ${formatJsNullableString(normalized.postAction)},
+            delay: ${formatJsNullableNumber(normalized.delay)}
         }`;
 }
 

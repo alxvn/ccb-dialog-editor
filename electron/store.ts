@@ -1,11 +1,7 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import {
-  buildCopperCubeDialogExtension,
-  generateExtensionPostfix,
-  getExtensionFileName,
-} from "../shared/exportFormat";
+import { generateExtensionPostfix, getExtensionFileName } from "../shared/exportFormat";
 import {
   dialogFileSchema,
   projectFileSchema,
@@ -149,7 +145,7 @@ export async function createDialog(
   const dialogId = randomUUID();
   const dialog: DialogFile =
     type === "branching"
-      ? { type: "branching", id: dialogId, name, nodes: [], edges: [] }
+      ? { type: "branching", id: dialogId, name, location: "", playerSpeaker: "", nodes: [], edges: [] }
       : { type: "linear", id: dialogId, name, location: "", lines: [] };
   const project = await readProject(projectId);
   const now = new Date().toISOString();
@@ -242,15 +238,22 @@ async function ensureExtensionPostfix(project: ProjectFile): Promise<ProjectFile
   return nextProject;
 }
 
-export async function exportProjectToExtension(projectId: string, dialogs: DialogFile[]): Promise<string> {
+export async function ensureProjectExtensionPostfix(projectId: string): Promise<string> {
   const project = await ensureExtensionPostfix(await readProject(projectId));
   const extensionPostfix = project.extensionPostfix;
   if (!extensionPostfix) {
     throw new Error("Project extension postfix is missing");
   }
+  return extensionPostfix;
+}
 
-  const parsedDialogs = dialogs.map((dialog) => dialogFileSchema.parse(dialog));
-  const extensionText = buildCopperCubeDialogExtension(project.name, extensionPostfix, parsedDialogs);
+export async function writeExtensionFile(projectId: string, extensionText: string): Promise<string> {
+  const project = await readProject(projectId);
+  const extensionPostfix = project.extensionPostfix;
+  if (!extensionPostfix) {
+    throw new Error("Project extension postfix is missing");
+  }
+
   const outputDir = getCopperCubeExtensionsDir();
   const outputPath = path.join(outputDir, getExtensionFileName(extensionPostfix));
 

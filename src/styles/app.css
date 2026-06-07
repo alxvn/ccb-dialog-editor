@@ -477,9 +477,26 @@ button {
   font-size: 0.85rem;
 }
 
+.flow-node-drag-handle {
+  cursor: grab;
+  user-select: none;
+  margin: -10px -10px 0;
+  padding: 8px 10px;
+  border-radius: 8px 8px 0 0;
+}
+
+.flow-node-drag-handle:active {
+  cursor: grabbing;
+}
+
 .flow-node-title {
   font-weight: 600;
-  margin-bottom: 2px;
+  margin-bottom: 0;
+}
+
+.react-flow__node.selected .flow-node {
+  outline: 2px solid #6eb5ff;
+  outline-offset: 2px;
 }
 
 .flow-node input,
@@ -499,11 +516,67 @@ button {
 }
 
 .flow-node-line {
-  min-height: 180px;
+  position: relative;
+  min-height: 220px;
+  background: #252d3d;
+  border-color: #4a6fa5;
+}
+
+.flow-node-line.flow-node-generating,
+.flow-node-response.flow-node-generating {
+  opacity: 0.85;
+}
+
+.flow-node-generating-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.flow-node-line .generate-line-btn,
+.flow-node-response .generate-line-btn {
+  align-self: flex-start;
+}
+
+.flow-node-line .flow-node-title {
+  color: #8eb8f0;
+}
+
+.flow-node-response {
+  position: relative;
+  min-height: 200px;
+  background: #243330;
+  border-color: #3d8a7a;
+}
+
+.flow-node-response .flow-node-title {
+  color: #6ecfc0;
 }
 
 .flow-node-response textarea {
   min-height: 72px;
+}
+
+.flow-node-readonly {
+  color: #9aa3b2;
+  cursor: default;
+}
+
+.dialog-player-speaker-select {
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  border: 1px solid #3f424d;
+  border-radius: 4px;
+  background: #202229;
+  color: #fff;
 }
 
 .toast {

@@ -8,12 +8,18 @@ export type GenerateLineFormValues = {
 };
 
 type Props = {
+  title?: string;
   onSubmit: (values: GenerateLineFormValues) => void;
   onCancel: () => void;
   generating: boolean;
 };
 
-export default function GenerateLineModal({ onSubmit, onCancel, generating }: Props): JSX.Element {
+export default function GenerateLineModal({
+  title = "Generate NPC Line",
+  onSubmit,
+  onCancel,
+  generating,
+}: Props): JSX.Element {
   const [moodId, setMoodId] = useState(responseMoods[0].id);
   const [detailed, setDetailed] = useState(false);
   const [userPrompt, setUserPrompt] = useState("");
@@ -36,7 +42,7 @@ export default function GenerateLineModal({ onSubmit, onCancel, generating }: Pr
         role="dialog"
         aria-labelledby="generate-line-title"
       >
-        <h2 id="generate-line-title">Generate NPC Line</h2>
+        <h2 id="generate-line-title">{title}</h2>
         <form onSubmit={handleSubmit}>
           <label className="field-label" htmlFor="generate-mood">
             Response mood
@@ -79,9 +85,6 @@ export default function GenerateLineModal({ onSubmit, onCancel, generating }: Pr
             <span style={{ alignSelf: "baseline" }}>Make detailed response</span>
           </label>
     
-    
-
-
           <label className="field-label" htmlFor="generate-prompt">
             Prompt
           </label>
@@ -90,7 +93,7 @@ export default function GenerateLineModal({ onSubmit, onCancel, generating }: Pr
             ref={textareaRef}
             className="generate-prompt-input"
             value={userPrompt}
-            placeholder="Say you don't know"
+            placeholder="What should this character convey?"
             disabled={generating}
             onChange={(event) => setUserPrompt(event.target.value)}
             onKeyDown={(event) => {

@@ -3,6 +3,7 @@ import type {
   BranchingEdge,
   BranchingNode,
   BranchingViewport,
+  DialogLine,
 } from "./schemas";
 import {
   LINE_NODE_INPUT_HANDLE,
@@ -21,6 +22,8 @@ export type LineNodeData = {
 
 export type ResponseNodeData = {
   text: string;
+  preAction: string | null;
+  postAction: string | null;
 };
 
 export type BranchingFlowNode = {
@@ -53,6 +56,12 @@ const emptyLineData = (): LineNodeData => ({
   delay: null,
 });
 
+const emptyResponseData = (): ResponseNodeData => ({
+  text: "",
+  preAction: null,
+  postAction: null,
+});
+
 export function domainNodeToFlowNode(node: BranchingNode): BranchingFlowNode {
   if (node.type === "line") {
     return {
@@ -72,7 +81,11 @@ export function domainNodeToFlowNode(node: BranchingNode): BranchingFlowNode {
     id: node.id,
     type: "response",
     position: node.position,
-    data: { text: node.text },
+    data: {
+      text: node.text,
+      preAction: node.preAction,
+      postAction: node.postAction,
+    },
   };
 }
 
@@ -84,6 +97,8 @@ export function flowNodeToDomainNode(node: BranchingFlowNode): BranchingNode {
       type: "response",
       position: node.position,
       text: data.text,
+      preAction: data.preAction ?? null,
+      postAction: data.postAction ?? null,
     };
   }
   const data = node.data as LineNodeData;
@@ -93,9 +108,9 @@ export function flowNodeToDomainNode(node: BranchingFlowNode): BranchingNode {
     position: node.position,
     speaker: data.speaker,
     text: data.text,
-    preAction: data.preAction,
-    postAction: data.postAction,
-    delay: data.delay,
+    preAction: data.preAction ?? null,
+    postAction: data.postAction ?? null,
+    delay: data.delay ?? null,
   };
 }
 
@@ -132,7 +147,7 @@ export function dialogToFlow(dialog: BranchingDialogFile): {
 }
 
 export function flowToDialog(
-  base: Pick<BranchingDialogFile, "id" | "name" | "type">,
+  base: Pick<BranchingDialogFile, "id" | "name" | "type" | "location" | "playerSpeaker">,
   nodes: BranchingFlowNode[],
   edges: BranchingFlowEdge[],
   viewport?: BranchingViewport,
@@ -160,7 +175,7 @@ export function createResponseFlowNode(position: { x: number; y: number }): Bran
     id: crypto.randomUUID(),
     type: "response",
     position,
-    data: { text: "" },
+    data: emptyResponseData(),
   };
 }
 
@@ -226,4 +241,84 @@ export function findBranchingEntryNodeId(
   }
   const firstLine = nodes.find((node) => node.type === "line");
   return firstLine?.id ?? nodes[0].id;
+}
+
+function pickPredecessorEdge(
+  targetId: string,
+  incomingByTarget: Map<string, BranchingFlowEdge[]>,
+): BranchingFlowEdge | null {
+  const incoming = incomingByTarget.get(targetId) ?? [];
+  if (incoming.length === 0) {
+    return null;
+  }
+  return [...incoming].sort((a, b) => a.source.localeCompare(b.source))[0];
+}
+
+export function traceBranchingDialogHistory(
+  targetNodeId: string,
+  nodes: BranchingFlowNode[],
+  edges: BranchingFlowEdge[],
+  playerSpeaker: string,
+): DialogLine[] {
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const incomingByTarget = new Map<string, BranchingFlowEdge[]>();
+  for (const edge of edges) {
+    const list = incomingByTarget.get(edge.target) ?? [];
+    list.push(edge);
+    incomingByTarget.set(edge.target, list);
+  }
+
+  const history: DialogLine[] = [];
+  const visited = new Set<string>();
+  let currentId = targetNodeId;
+
+  while (true) {
+    const edge = pickPredecessorEdge(currentId, incomingByTarget);
+    if (!edge) {
+      break;
+    }
+
+    const predecessorId = edge.source;
+    if (visited.has(predecessorId)) {
+      break;
+    }
+    visited.add(predecessorId);
+
+    const predecessor = nodeById.get(predecessorId);
+    if (!predecessor) {
+      break;
+    }
+
+    if (predecessor.type === "line") {
+      const lineData = predecessor.data as LineNodeData;
+      history.unshift({
+        id: predecessorId,
+        speaker: lineData.speaker,
+        text: lineData.text,
+        preAction: lineData.preAction,
+        postAction: lineData.postAction,
+        delay: lineData.delay,
+      });
+      currentId = predecessorId;
+      continue;
+    }
+
+    if (predecessor.type === "response") {
+      const responseData = predecessor.data as ResponseNodeData;
+      history.unshift({
+        id: predecessorId,
+        speaker: playerSpeaker,
+        text: responseData.text,
+        preAction: responseData.preAction,
+        postAction: responseData.postAction,
+        delay: null,
+      });
+      currentId = predecessorId;
+      continue;
+    }
+
+    break;
+  }
+
+  return history;
 }

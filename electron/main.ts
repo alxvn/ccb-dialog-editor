@@ -3,7 +3,8 @@ import path from "node:path";
 import {
   createDialog,
   createProject,
-  exportProjectToExtension,
+  ensureProjectExtensionPostfix,
+  writeExtensionFile,
   listProjects,
   openProject,
   removeDialog,
@@ -48,8 +49,11 @@ app.whenReady().then(() => {
   ipcMain.handle("projects:update", async (_event, projectId: string, project: ProjectFile) =>
     updateProject(projectId, project),
   );
-  ipcMain.handle("projects:export", async (_event, projectId: string, dialogs: DialogFile[]) =>
-    exportProjectToExtension(projectId, dialogs),
+  ipcMain.handle("projects:ensure-extension-postfix", async (_event, projectId: string) =>
+    ensureProjectExtensionPostfix(projectId),
+  );
+  ipcMain.handle("projects:write-extension", async (_event, projectId: string, extensionText: string) =>
+    writeExtensionFile(projectId, extensionText),
   );
 
   ipcMain.handle("llm:status", async () => getModelStatus());
