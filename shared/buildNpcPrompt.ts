@@ -16,7 +16,7 @@ function formatDialogueHistory(lines: DialogLine[]): string {
   if (entries.length === 0) {
     return "";
   }
-  return entries.map((line) => `${line.speaker}: ${line.text}`).join("\n");
+  return entries.map((line, index) => `${index + 1}. ${line.speaker}: ${line.text}`).join("\n");
 }
 
 export function findSpeakerDescription(speakers: Speaker[], speakerName: string): string {
@@ -26,6 +26,7 @@ export function findSpeakerDescription(speakers: Speaker[], speakerName: string)
 
 export function buildNpcPrompt(params: BuildNpcPromptParams): string {
   const {
+    speakerName,
     speakerDescription,
     location,
     linesBefore,
@@ -36,24 +37,29 @@ export function buildNpcPrompt(params: BuildNpcPromptParams): string {
 
   const sections: string[] = [];
 
-  sections.push("Character:");
-  sections.push(speakerDescription.trim() || "(No description provided.)");
+  sections.push("You are a game character, responding to the game dialogue.");
+  sections.push("");
+  sections.push("#Character:");
+  sections.push(`##Name: ${speakerName}`);
+  if (speakerDescription.trim()) {
+    sections.push(`##Description: ${speakerDescription.trim()}`);
+  }
   sections.push("");
 
   if (location.trim()) {
-    sections.push("Location:");
+    sections.push("#Location:");
     sections.push(location.trim());
     sections.push("");
   }
 
   const dialogue = formatDialogueHistory(linesBefore);
   if (dialogue) {
-    sections.push("Dialogue:");
+    sections.push("#Dialogue:");
     sections.push(dialogue);
     sections.push("");
   }
 
-  sections.push("Instruction:");
+  sections.push("#Instruction:");
   sections.push(getMoodInstruction(moodId));
   if (userPrompt.trim()) {
     sections.push(userPrompt.trim());
@@ -62,5 +68,8 @@ export function buildNpcPrompt(params: BuildNpcPromptParams): string {
   sections.push("");
   sections.push("Generate only the next dialogue line.");
 
-  return sections.join("\n");
+  const prompt = sections.join("\n");
+  console.log(`buildNpcPrompt: ${prompt}`);
+
+  return prompt;
 }
